@@ -8,8 +8,9 @@ mSSA implementation for the mSSA variant in the paper:
 
 from datetime import datetime
 
-import numpy as np
-import pandas as pd
+import cupy as np
+import cudf as pd
+
 from scipy.stats import norm
 
 from mssa.src.prediction_models.ts_meta_model import TSMM
@@ -126,7 +127,7 @@ class mSSA(object):
             return float(np.median(np.diff(time_stamps.values))) / (1e9)
         return interval
 
-    def _aggregate_df(self, df):
+    def _aggregate_df(self, df: pd.DataFrame):
         """
         aggregate the dataframe by to its time columns according to agg_interval and agg_method
         :param df: dataframe to be aggregated 
@@ -136,7 +137,8 @@ class mSSA(object):
         if isinstance(df.index[0], datetime):
             agg_op = df.groupby(pd.Grouper(freq='%sS' % self.agg_interval, sort=True, closed='right', label='right'))
         elif isinstance(df.index[0], (int, np.integer)):
-            agg_op = df.groupby((df.index // self.agg_interval).astype(int))
+            agg_op = df.groupby(
+                (df.index // self.agg_interval).astype('int64'))
         else:
             raise ValueError('Dataframe index must be integers or timestamps')
 
@@ -188,7 +190,7 @@ class mSSA(object):
 
         df = self._aggregate_df(df)
 
-        obs = (df.values).astype('float')
+        obs = (df.values).astype('float64')
         # if obs.shape[0] < self.no_ts:
         #     print("Dataframe does not have enough new unseen entries. (Number of new timestamps should be =>  "
         #           "(number of time series)")
@@ -252,9 +254,9 @@ class mSSA(object):
         if type(t1) != type(t2):
             raise ValueError("Start and end time should have the same type ")
 
-        if (not isinstance(t1, (str, pd.Timestamp)) and isinstance(self.start_time, (pd.Timestamp))) or (
+        if (not isinstance(t1, (str, datetime)) and isinstance(self.start_time, (datetime))) or (
                 isinstance(self.start_time, (int, np.integer)) and not isinstance(t1, (int, np.integer))):
-            if isinstance(self.start_time, (pd.Timestamp)):
+            if isinstance(self.start_time, (datetime)):
                 raise ValueError("The time value should be a valid timestamp ")
             else:
                 raise ValueError("The time value should be an integer ")
@@ -319,7 +321,7 @@ class mSSA(object):
         if self.uq and not self.direct_var:
             var = var - np.square(predictions)
         df = pd.DataFrame(
-            index=index_ts_inv_mapper(self.start_time, self.agg_interval, np.arange(t1, t2 + 1).astype('float')))
+            index=index_ts_inv_mapper(self.start_time, self.agg_interval, np.arange(t1, t2 + 1).astype('float64')))
         df['Mean Predictions'] = predictions
         
         if not self.uq: 

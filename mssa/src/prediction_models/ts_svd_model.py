@@ -4,11 +4,11 @@
 #
 ######################################################
 import copy
-import numpy as np
-import pandas as pd
+import cupy as np
+import cudf as pd
 from mssa.src.algorithms.svdWrapper import SVDWrapper as SVD
 from mssa.src import tsUtils
-from sklearn.metrics import r2_score
+from cuml.metrics import r2_score
 
 class SVDModel(object):
 

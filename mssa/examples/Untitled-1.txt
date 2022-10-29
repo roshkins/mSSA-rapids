@@ -1,0 +1,82 @@
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+Cell In [9], line 1
+----> 1 model.update_model(data.loc[:,['ts_7']])
+
+File /mnt/e/mSSA-rapids/mssa/mssa.py:190, in mSSA.update_model(self, df)
+    187     if self.column_names != list(df.columns):
+    188         raise ValueError('The Dataframe must have the same columns as the original Dataframe')
+--> 190 df = self._aggregate_df(df)
+    192 obs = (df.values).astype('float')
+    193 # if obs.shape[0] < self.no_ts:
+    194 #     print(\"Dataframe does not have enough new unseen entries. (Number of new timestamps should be =>  \"
+    195 #           \"(number of time series)\")
+    196     # return
+    197 
+    198 # lag is the the slack between the variance and timeseries model        
+
+File /mnt/e/mSSA-rapids/mssa/mssa.py:140, in mSSA._aggregate_df(self, df)
+    138     agg_op = df.groupby(pd.Grouper(freq='%sS' % self.agg_interval, sort=True, closed='right', label='right'))
+    139 elif isinstance(df.index[0], (int, np.integer)):
+--> 140     agg_op = df.groupby((df.index // self.agg_interval).astype(int))
+    141 else:
+    142     raise ValueError('Dataframe index must be integers or timestamps')
+
+File ~/anaconda3/envs/mSSA_rapids_22.10/lib/python3.9/site-packages/cudf/core/mixins/mixin_factory.py:11, in _partialmethod.<locals>.wrapper(self, *args2, **kwargs2)
+     10 def wrapper(self, *args2, **kwargs2):
+---> 11     return method(self, *args1, *args2, **kwargs1, **kwargs2)
+
+File ~/anaconda3/envs/mSSA_rapids_22.10/lib/python3.9/site-packages/cudf/core/index.py:979, in GenericIndex._binaryop(self, other, op, fill_value, *args, **kwargs)
+    977 if operands is NotImplemented:
+    978     return NotImplemented
+--> 979 ret = _index_from_data(self._colwise_binop(operands, op))
+    981 # pandas returns numpy arrays when the outputs are boolean. We
+    982 # explicitly _do not_ use isinstance here: we want only boolean
+    983 # GenericIndexes, not dtype-specific subclasses.
+    984 if type(ret) is GenericIndex and ret.dtype.kind == \"b\":
+
+File ~/anaconda3/envs/mSSA_rapids_22.10/lib/python3.9/contextlib.py:79, in ContextDecorator.__call__.<locals>.inner(*args, **kwds)
+     76 @wraps(func)
+     77 def inner(*args, **kwds):
+     78     with self._recreate_cm():
+---> 79         return func(*args, **kwds)
+
+File ~/anaconda3/envs/mSSA_rapids_22.10/lib/python3.9/site-packages/cudf/core/frame.py:1724, in Frame._colwise_binop(cls, operands, fn)
+   1716         assert False, \"At least one operand must be a column.\"
+   1718 # TODO: Disable logical and binary operators between columns that
+   1719 # are not numerical using the new binops mixin.
+   1721 outcol = (
+   1722     getattr(operator, fn)(right_column, left_column)
+   1723     if reflect
+-> 1724     else getattr(operator, fn)(left_column, right_column)
+   1725 )
+   1727 if output_mask is not None:
+   1728     outcol = outcol.set_mask(output_mask)
+
+File ~/anaconda3/envs/mSSA_rapids_22.10/lib/python3.9/site-packages/cudf/core/mixins/mixin_factory.py:11, in _partialmethod.<locals>.wrapper(self, *args2, **kwargs2)
+     10 def wrapper(self, *args2, **kwargs2):
+---> 11     return method(self, *args1, *args2, **kwargs1, **kwargs2)
+
+File ~/anaconda3/envs/mSSA_rapids_22.10/lib/python3.9/site-packages/cudf/core/column/numerical.py:222, in NumericalColumn._binaryop(self, other, op)
+    219         return self.astype(truediv_type)._binaryop(other, op)
+    221 reflect, op = self._check_reflected_op(op)
+--> 222 if (other := self._wrap_binop_normalization(other)) is NotImplemented:
+    223     return NotImplemented
+    224 out_dtype = self.dtype
+
+File ~/anaconda3/envs/mSSA_rapids_22.10/lib/python3.9/site-packages/cudf/core/column/column.py:506, in ColumnBase._wrap_binop_normalization(self, other)
+    504 if isinstance(other, np.ndarray) and other.ndim == 0:
+    505     other = other.item()
+--> 506 return self.normalize_binop_value(other)
+
+File ~/anaconda3/envs/mSSA_rapids_22.10/lib/python3.9/site-packages/cudf/core/column/numerical.py:294, in NumericalColumn.normalize_binop_value(self, other)
+    291     # expensive device-host transfer just to
+    292     # adjust the dtype
+    293     other = other.value
+--> 294 other_dtype = np.min_scalar_type(other)
+    295 if other_dtype.kind in {\"b\", \"i\", \"u\", \"f\"}:
+    296     if isinstance(other, cudf.Scalar):
+
+File <__array_function__ internals>:180, in min_scalar_type(*args, **kwargs)
+
+TypeError: no implementation found for 'numpy.min_scalar_type' on types that implement __array_function__: [<class 'cupy.ndarray'>]"

@@ -3,10 +3,10 @@
 # Utility functions
 #
 ######################################################
-import numpy as np
-from sklearn.metrics import mean_squared_error
+import cupy as np
+from cuml.metrics import mean_squared_error
 import copy
-from numpy.linalg import qr  as qr
+from cupy.linalg import qr as qr
 
 def unnormalize(arr, mean, std):
     return arr *std + mean

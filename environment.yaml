@@ -1,0 +1,8 @@
+name: mSSA_rapids_22.10
+channels:
+  - defaults
+dependencies:
+  - rapids=22.10
+  - python=3.9
+  - cudatoolkit=11.5
+prefix: /home/rashi/anaconda3/envs/mSSA_rapids_22.10

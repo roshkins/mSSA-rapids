@@ -3,11 +3,11 @@
 # Utility functions
 #
 ######################################################
-import numpy as np
-from sklearn.metrics import mean_squared_error
+import cupy as np
+from cuml.metrics import mean_squared_error
 import copy
-from numpy.linalg import qr  as qr
-import pandas as pd
+from cupy.linalg import qr as qr
+import cudf as pd
 from dateutil.parser import parse
 from math import ceil
 

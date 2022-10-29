@@ -1,8 +1,8 @@
-import numpy as np
-import pandas as pd
+import cupy as np
+import cudf as pd
 from  mssa.src.prediction_models.ts_svd_model import SVDModel
 from math import ceil
-from sklearn.preprocessing import StandardScaler
+from cuml.preprocessing import StandardScaler
 
 class TSMM(object):
     # kSingularValuesToKeep:    (int) the number of singular values to retain
@@ -23,12 +23,12 @@ class TSMM(object):
         if L is None:
             self.L = int(np.sqrt(T / self.col_to_row_ratio))
             M = int(self.L * self.col_to_row_ratio)
-            self.T = int(self.L * M)
+            self.T = min(int(self.L * M), 2_147_483_648)
 
         else:
             self.L = L
             M = int(T/L)
-            self.T = int(self.L*M)
+            self.T = min(int(self.L*M), 2_147_483_648)
             self.col_to_row_ratio = M/L
             persist_L = True
         
@@ -40,10 +40,10 @@ class TSMM(object):
             self.col_to_row_ratio = M/self.L -1e-14
             
             if not persist_L:
-                self.T = int(M*M/self.col_to_row_ratio)
+                self.T = min(int(M*M/self.col_to_row_ratio), 2_147_483_648)
                 self.L = int(np.sqrt(self.T / self.col_to_row_ratio))
             else:
-                self.T = self.L*M
+                self.T = min(self.L*M, 2_147_483_648)
             Warning ('Number of columns has to be even and divisible by the number of time series thus col_to_row_ratio is changed to %s'%( self.col_to_row_ratio))
   
         self.normalize = normalize
@@ -132,7 +132,8 @@ class TSMM(object):
                     continue
                 
                 if len(self.models) == 0:
-                    self.updateTS(NewEntries[: self.T//self.no_ts,:])
+                    self.updateTS(
+                        NewEntries[: min(self.T, 2_147_483_647)//min(self.no_ts, 2_147_483_647), :])
                     SkipNext = True
                     self.fitModels()
                     i += 1

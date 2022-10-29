@@ -3,7 +3,7 @@
 # A wrapper for the SVD implementation of choice
 #
 ######################################################
-import numpy as np
+import cupy as np
 from mssa.src import tsUtils
 
 class SVDWrapper:
@@ -58,8 +58,8 @@ class SVDWrapper:
                 return ([], [], [])
 
             # if k > the max possible singular values, set it to be that value
-            elif (k > np.min([self.M, self.N])):
-                k = np.min([self.M, self.N])
+            elif (k > np.min(np.array([self.M, self.N]))):
+                k = np.min(np.array([self.M, self.N]))
 
         if ((self.U is None) | (self.V is None) | (self.s is None)):
             est_k = self.decompose() # first perform the full decomposition
